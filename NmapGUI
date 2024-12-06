@@ -1,0 +1,84 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+
+public class NmapGUI extends JFrame {
+    private JTextField commandField;
+    private JTextArea outputArea;
+    private JButton runButton;
+
+    public NmapGUI() {
+        // Set up the frame
+        setTitle("Nmap GUI Tool");
+        setSize(600, 400);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        
+        // Create components
+        JLabel commandLabel = new JLabel("Enter Nmap Command:");
+        commandField = new JTextField("nmap ", 40); // Default command prompt
+        runButton = new JButton("Run Nmap");
+        outputArea = new JTextArea();
+        outputArea.setEditable(false);
+        
+        // Layout for command input
+        JPanel commandPanel = new JPanel();
+        commandPanel.setLayout(new FlowLayout());
+        commandPanel.add(commandLabel);
+        commandPanel.add(commandField);
+        commandPanel.add(runButton);
+        
+        // Layout for output
+        JScrollPane outputScrollPane = new JScrollPane(outputArea);
+        outputScrollPane.setPreferredSize(new Dimension(550, 250));
+        
+        // Add components to the frame
+        setLayout(new BorderLayout());
+        add(commandPanel, BorderLayout.NORTH);
+        add(outputScrollPane, BorderLayout.CENTER);
+        
+        // Add action listener to the Run button
+        runButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String command = commandField.getText();
+                executeNmapCommand(command);
+            }
+        });
+    }
+
+    // Method to execute Nmap command and display output
+    private void executeNmapCommand(String command) {
+        outputArea.setText(""); // Clear previous output
+        try {
+            // Run the command as a system process
+            Process process = Runtime.getRuntime().exec(command);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+
+            String line;
+            // Read and display standard output
+            while ((line = reader.readLine()) != null) {
+                outputArea.append(line + "\n");
+            }
+            // Read and display error output
+            while ((line = errorReader.readLine()) != null) {
+                outputArea.append(line + "\n");
+            }
+
+            // Wait for the process to complete
+            process.waitFor();
+        } catch (Exception ex) {
+            outputArea.append("Error executing command: " + ex.getMessage() + "\n");
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            new NmapGUI().setVisible(true);
+        });
+    }
+}
